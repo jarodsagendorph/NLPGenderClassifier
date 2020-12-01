@@ -22,11 +22,11 @@ import logging
 #logging.basicConfig(level=logging.INFO)
 
 # Load pre-trained model tokenizer (vocabulary)
-# tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 
-# model = BertModel.from_pretrained('bert-base-uncased',
-#   output_hidden_states = True, # Whether the model returns all hidden-states.
-# )
+model = BertModel.from_pretrained('bert-base-uncased',
+  output_hidden_states = True, # Whether the model returns all hidden-states.
+)
 
 import os
 
@@ -116,77 +116,43 @@ def main():
         'F': []
     }
 
-    # with open('no_rt.txt', 'r') as json_file:
-    #     count = 0
-    #     gender_count = 0
-    #     for line in json_file.readlines():
-    #         try:
-    #             tweet = json.loads(line)
-    #         except:
-    #             continue
+    with open('no_rt.txt', 'r') as json_file:
+        count = 0
+        gender_count = 0
+        for line in json_file.readlines():
+            try:
+                tweet = json.loads(line)
+            except:
+                continue
 
-    #         name = tweet['includes']['users'][0]['name'].split()[0]
-    #         gender = name_to_gender.get(name)
-    #         if not gender:
-    #             continue
+            name = tweet['includes']['users'][0]['name'].split()[0]
+            gender = name_to_gender.get(name)
+            if not gender:
+                continue
 
-    #         text = tweet['data']['text']
-    #         # print(len(text))
-    #         # if len(text) < 35:
-    #         #     continue
+            text = tweet['data']['text']
+            # print(len(text))
+            # if len(text) < 35:
+            #     continue
 
-    #         parts = [p for p in text.split() if p.lower() in ["i", "i'm", "i'll", "i'd", "me", "mine", "we", "our"]]
-    #         # text_len = " ".join(parts)
+            parts = [p for p in text.split() if p.lower() in ["i", "i'm", "i'll", "i'd", "me", "mine", "we", "our"]]
+            # text_len = " ".join(parts)
 
-    #         if not parts:
-    #             continue
+            if not parts:
+                continue
 
-    #         print(text)
-    #         tw[gender].append(bow(text))
+            print(text)
+            tw[gender].append(encode(text))
 
-    #         # print(gender, text)
-    #         # x_data.append(bow(text))
-    #         # y_data.append(0 if gender == 'M' else 1)
-    #         gender_count += (0 if gender == 'M' else 1)
-    #         count += 1
+            # print(gender, text)
+            # x_data.append(bow(text))
+            # y_data.append(0 if gender == 'M' else 1)
+            gender_count += (0 if gender == 'M' else 1)
+            count += 1
 
-    #     print(count, gender_count / count)
+        print(count, gender_count / count)
 
-    # print(len(tw['M']), len(tw['F']))
-
-    x_train = []
-    x_test = []
-
-    y_train = []
-    y_test = []
-
-    books = read_files("books/m")
-
-    l = 10
-
-    for i, a in enumerate(books.keys()):
-        if i < l:
-            for t in range(3):
-                print(a)
-                x_train.append(bow(books[a][t]))
-                y_train.append(0)
-        else:
-            for t in range(3):
-                x_test.append(bow(books[a][t]))
-                y_test.append(0)
-
-    books = read_files("books/f")
-
-    for i, a in enumerate(books.keys()):
-        if i < l:
-            for t in range(3):
-                print(a)
-                x_train.append(bow(books[a][t]))
-                y_train.append(1)
-        else:
-            for t in range(3):
-                x_test.append(bow(books[a][t]))
-                y_test.append(1)
+    print(len(tw['M']), len(tw['F']))
 
     train_size = 800
     test_size = 200
@@ -197,18 +163,18 @@ def main():
     print("here")
 
     for i in range(1):
-        # random.shuffle(tw['M'])
-        # random.shuffle(tw['F'])
+        random.shuffle(tw['M'])
+        random.shuffle(tw['F'])
 
-        # x_train = tw['M'][:train_size] + tw['F'][:train_size]
-        # x_test = tw['M'][train_size:(train_size+test_size)] + tw['F'][train_size:(train_size+test_size)]
+        x_train = tw['M'][:train_size] + tw['F'][:train_size]
+        x_test = tw['M'][train_size:(train_size+test_size)] + tw['F'][train_size:(train_size+test_size)]
 
-        # y_train = [0] * train_size + [1] * train_size
-        # y_test = [0] * test_size + [1] * test_size
+        y_train = [0] * train_size + [1] * train_size
+        y_test = [0] * test_size + [1] * test_size
 
-        v = DictVectorizer(sparse=False)
-        x_train = v.fit_transform(x_train)
-        x_test = v.transform(x_test)
+        # v = DictVectorizer(sparse=False)
+        # x_train = v.fit_transform(x_train)
+        # x_test = v.transform(x_test)
 
         lgr = LogisticRegression(max_iter=1000)
 
@@ -218,15 +184,15 @@ def main():
         actuals += y_test
     print(accuracy_score(actuals, predictions), precision_score(actuals, predictions), recall_score(actuals, predictions))
 
-    importance = lgr.coef_
-    inverse = v.inverse_transform(importance)[0]
+    # importance = lgr.coef_
+    # inverse = v.inverse_transform(importance)[0]
 
-    items = []
-    for word in inverse:
-        items.append([word, inverse[word]])
+    # items = []
+    # for word in inverse:
+    #     items.append([word, inverse[word]])
 
-    items.sort(key = lambda x: abs(x[1]), reverse=True)
-    print(items[:100])
+    # items.sort(key = lambda x: abs(x[1]), reverse=True)
+    # print(items[:100])
 
 if __name__ == '__main__':
     main()
